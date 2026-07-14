@@ -94,11 +94,7 @@ export function EventRsvpForm() {
     <div className="mx-auto max-w-2xl px-4 py-10 sm:px-6">
       <h1 className="text-3xl font-bold text-slate-800">Event RSVP portal</h1>
 
-      <p className="mt-3 text-sm text-gray-500">
-        API: <code className="font-mono">https://miraphoto-backend.fly.dev</code>{" "}
-        · Override with <code className="font-mono">NEXT_PUBLIC_API_URL</code>{" "}
-        for a local backend (e.g. <code className="font-mono">http://localhost:3000</code>).
-      </p>
+      
 
       {/*
         The original screenshot's "No account required" line no longer
