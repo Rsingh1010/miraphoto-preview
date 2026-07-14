@@ -49,9 +49,10 @@ export const organizationSchema = z.object({
 
   notes: z.string().trim().optional(),
 
-  // Only ever set by an admin in the UI; still validated here as a boolean
-  // so the payload shape is consistent regardless of who submits.
-  isVerified: z.boolean().optional(),
+  // TODO(verified-organization): isVerified is intentionally NOT part of
+  // this schema yet. Requirements for the Verified Organization label
+  // aren't finalized — re-add it here (as an admin-only, backend-set
+  // boolean) once that's confirmed. Do not expose it in this form's UI.
 });
 
 export type OrganizationFormValues = z.infer<typeof organizationSchema>;

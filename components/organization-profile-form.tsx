@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useForm, Controller } from "react-hook-form";
+import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   organizationSchema,
@@ -9,7 +10,6 @@ import {
 } from "@/lib/validation/organization";
 import { saveOrganization } from "@/lib/api/organization";
 import { Field } from "@/components/ui/field";
-import { Switch } from "@/components/ui/switch";
 import { inputClasses } from "@/lib/ui/styles";
 import type { CurrentUser } from "@/lib/types/user";
 
@@ -17,7 +17,7 @@ interface OrganizationProfileFormProps {
   currentUser: CurrentUser;
 }
 
-type SubmitStatus = "idle" | "success" | "error";
+type SubmitStatus = "idle" | "submitting" | "success" | "error";
 
 const defaultValues: OrganizationFormValues = {
   organizationName: "",
@@ -27,19 +27,22 @@ const defaultValues: OrganizationFormValues = {
   organizationWebsite: "",
   organizationSocialMedia: "",
   notes: "",
-  isVerified: false,
 };
 
 export function OrganizationProfileForm({
   currentUser,
 }: OrganizationProfileFormProps) {
-  const isAdmin = currentUser.role === "admin";
+  const router = useRouter();
   const [status, setStatus] = useState<SubmitStatus>("idle");
+
+  // TODO(verified-organization): currentUser.role will gate the admin-only
+  // Verified Organization switch once that feature is built. Keeping the
+  // prop wired now so the calling page doesn't need to change later.
+  void currentUser;
 
   const {
     register,
     handleSubmit,
-    control,
     formState: { errors, isSubmitting },
   } = useForm<OrganizationFormValues>({
     resolver: zodResolver(organizationSchema),
@@ -48,10 +51,14 @@ export function OrganizationProfileForm({
   });
 
   const onSubmit = async (data: OrganizationFormValues) => {
-    setStatus("idle");
+    setStatus("submitting");
     try {
       await saveOrganization(data);
       setStatus("success");
+      // Flow: Organization Sign Up -> Organization Profile -> Event RSVP.
+      // Once the profile is saved, send the organization straight to the
+      // Event RSVP page to complete registration and host their event.
+      router.push("/events/new");
     } catch (error) {
       console.error(error);
       setStatus("error");
@@ -213,26 +220,15 @@ export function OrganizationProfileForm({
             />
           </Field>
 
-          {isAdmin && (
-            <div className="border-t border-gray-200 pt-6">
-              <Controller
-                name="isVerified"
-                control={control}
-                render={({ field }) => (
-                  <Switch
-                    id="isVerified"
-                    label="Verified organization"
-                    checked={field.value ?? false}
-                    onChange={field.onChange}
-                  />
-                )}
-              />
-              <p className="mt-2 text-xs text-gray-500">
-                Only administrators can see and change this. Organizations
-                cannot verify themselves.
-              </p>
-            </div>
-          )}
+          {/*
+            TODO(verified-organization): Requirements for the Verified
+            Organization label aren't finalized yet. When they are, this is
+            where an admin-only Switch should go (gated on
+            currentUser.role === "admin"), following the same pattern this
+            component used previously — see lib/validation/organization.ts
+            for the matching schema TODO. Do not build this UI until the
+            requirements are confirmed.
+          */}
         </div>
 
         <div className="mt-8 flex flex-col items-center gap-3">

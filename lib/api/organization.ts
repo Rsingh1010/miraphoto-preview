@@ -16,9 +16,14 @@ export async function saveOrganization(
 
 /**
  * Placeholder for fetching the signed-in organization's profile.
- * Returns null when no profile exists yet — the Event RSVP flow uses
- * that to require profile completion before an org can host an event.
- * Replace with a real API call (e.g. GET /organizations/me) once ready.
+ * Returns null when no profile exists yet.
+ *
+ * TODO(backend): this isn't currently called anywhere. Once there's a
+ * real backend, EventAccessGate (components/event-access-gate.tsx)
+ * should use this (or an equivalent server-side check) to confirm an
+ * organization has actually completed their profile before granting
+ * access to the Event RSVP page, rather than relying on the frontend
+ * redirect that happens right after Organization Profile submission.
  */
 export async function getOrganizationProfile(): Promise<OrganizationProfile | null> {
   console.log("getOrganizationProfile");

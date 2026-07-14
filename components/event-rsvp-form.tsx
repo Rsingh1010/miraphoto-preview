@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { eventSchema, type EventFormValues } from "@/lib/validation/event";
-import { saveEvent } from "@/lib/api/event";
+import { createEvent, uploadImages } from "@/lib/api/event";
 import { validateImageFiles } from "@/lib/validation/file";
 import { Field } from "@/components/ui/field";
 import { RadioGroup } from "@/components/ui/radio-group";
@@ -15,6 +15,18 @@ import { inputClasses } from "@/lib/ui/styles";
 type SubmitStatus = "idle" | "success" | "error";
 
 const defaultValues: EventFormValues = {
+  // Organization fields — intentionally duplicated from the Organization
+  // Profile page (see lib/validation/event.ts for why). Both pages are
+  // kept as full, independent forms for review purposes.
+  organizationName: "",
+  contactPersonName: "",
+  contactPersonPhone: "",
+  contactPersonEmail: "",
+  organizationWebsite: "",
+  organizationSocialMedia: "",
+  notes: "",
+
+  // Event fields
   title: "",
   eventDate: "",
   startTime: "09:00",
@@ -60,8 +72,17 @@ export function EventRsvpForm() {
     if (coverError || galleryError) return;
 
     try {
-      // Images are handled outside the JSON payload — see saveEvent's note.
-      await saveEvent(data);
+      // TODO(backend): once createEvent/uploadImages are wired to the real
+      // API, decide the actual upload order (e.g. images first so their
+      // URLs can be included in the createEvent payload, or in parallel).
+      const [coverUpload, galleryUpload] = await Promise.all([
+        uploadImages(coverImage),
+        uploadImages(galleryImages),
+      ]);
+      console.log("uploaded cover image(s)", coverUpload);
+      console.log("uploaded gallery image(s)", galleryUpload);
+
+      await createEvent(data);
       setStatus("success");
     } catch (error) {
       console.error(error);
@@ -95,6 +116,133 @@ export function EventRsvpForm() {
         className="mt-8 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8"
       >
         <div className="flex flex-col gap-6">
+          {/*
+            Organization details — intentionally duplicated from the
+            Organization Profile page. Kept here so this page can stand
+            alone; see lib/validation/event.ts for why the schema reuses
+            organizationSchema rather than re-typing these rules.
+          */}
+          <div className="border-b border-gray-200 pb-6">
+            <h2 className="mb-4 text-lg font-semibold text-slate-800">
+              Organization details
+            </h2>
+
+            <div className="flex flex-col gap-6">
+              <Field
+                label="Organization / Company / School name"
+                htmlFor="organizationName"
+                required
+                error={errors.organizationName?.message}
+              >
+                <input
+                  id="organizationName"
+                  type="text"
+                  placeholder="At least 3 characters"
+                  className={inputClasses}
+                  aria-invalid={!!errors.organizationName}
+                  {...register("organizationName")}
+                />
+              </Field>
+
+              <Field
+                label="Contact person name"
+                htmlFor="contactPersonName"
+                required
+                error={errors.contactPersonName?.message}
+              >
+                <input
+                  id="contactPersonName"
+                  type="text"
+                  placeholder="Full name"
+                  className={inputClasses}
+                  aria-invalid={!!errors.contactPersonName}
+                  {...register("contactPersonName")}
+                />
+              </Field>
+
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                <Field
+                  label="Contact person phone"
+                  htmlFor="contactPersonPhone"
+                  required
+                  hint="E.164 format, e.g. +13478188801"
+                  error={errors.contactPersonPhone?.message}
+                >
+                  <input
+                    id="contactPersonPhone"
+                    type="tel"
+                    placeholder="+13478188801"
+                    className={inputClasses}
+                    aria-invalid={!!errors.contactPersonPhone}
+                    {...register("contactPersonPhone")}
+                  />
+                </Field>
+
+                <Field
+                  label="Contact person email"
+                  htmlFor="contactPersonEmail"
+                  required
+                  error={errors.contactPersonEmail?.message}
+                >
+                  <input
+                    id="contactPersonEmail"
+                    type="email"
+                    placeholder="name@organization.org"
+                    className={inputClasses}
+                    aria-invalid={!!errors.contactPersonEmail}
+                    {...register("contactPersonEmail")}
+                  />
+                </Field>
+              </div>
+
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                <Field
+                  label="Organization website (optional)"
+                  htmlFor="organizationWebsite"
+                  error={errors.organizationWebsite?.message}
+                >
+                  <input
+                    id="organizationWebsite"
+                    type="url"
+                    placeholder="https://example.org"
+                    className={inputClasses}
+                    aria-invalid={!!errors.organizationWebsite}
+                    {...register("organizationWebsite")}
+                  />
+                </Field>
+
+                <Field
+                  label="Organization social media (optional)"
+                  htmlFor="organizationSocialMedia"
+                  error={errors.organizationSocialMedia?.message}
+                >
+                  <input
+                    id="organizationSocialMedia"
+                    type="url"
+                    placeholder="https://instagram.com/yourorg"
+                    className={inputClasses}
+                    aria-invalid={!!errors.organizationSocialMedia}
+                    {...register("organizationSocialMedia")}
+                  />
+                </Field>
+              </div>
+
+              <Field
+                label="Notes (optional)"
+                htmlFor="notes"
+                error={errors.notes?.message}
+              >
+                <textarea
+                  id="notes"
+                  rows={4}
+                  placeholder="Anything else we should know"
+                  className={inputClasses}
+                  {...register("notes")}
+                />
+              </Field>
+            </div>
+          </div>
+
           <Field
             label="Title"
             htmlFor="title"
